@@ -2,6 +2,7 @@ import express from 'express'
 import {createClient} from "redis"
 import { prisma } from './db.js'
 import cors from "cors"
+const PORT = process.env.PORT || 3000;
 
 const SUBMISSION_QUEUE = process.env.SUBMISSION_QUEUE || "submission_queue";
 const username = process.env.REDIS_USERNAME
@@ -69,6 +70,6 @@ app.get("/submission/:submissionId",async(req,res)=>{
     })
 })
 
-app.listen(3000,()=>{
+app.listen(PORT,()=>{
     console.log("server is up")
 })
