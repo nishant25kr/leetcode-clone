@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from "child_process";
 import { prisma } from "./db";
-
+let count = 1;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const client = createClient()
@@ -14,7 +14,8 @@ client.connect().then(
         while(true){
             const response = await client.RPOP("problems")
             if(!response){
-                // console.log("no question")
+                count = count+1;
+                console.log(count)
                 await new Promise(resolve => {
                     setTimeout(resolve, 2000)
                 });
@@ -26,14 +27,43 @@ client.connect().then(
             const language = parsedData.language;
             const submissionId = parsedData.submissionId
             if(language === "cpp"){
-                console.log("running client c++ code",code)
-                const filePath = __dirname + "/code/a.cpp";
+                console.log("running client c++ code", code)
+                const codeDir = path.join(__dirname, "code")
+                fs.mkdirSync(codeDir, { recursive: true })
+                const filePath = path.join(codeDir, "a.cpp")
+                const outPath = path.join(codeDir, "out")
                 fs.writeFileSync(filePath, code)
-                spawn("g++", [filePath,"-o","./code/out"])
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                const response = spawn("./code/out")
-                response.stdout.on("data",(chunk: any)=>{
-                    console.log(chunk.toString("Utf8"));
+
+                // compile
+                await new Promise<void>((resolve, reject) => {
+                    const compile = spawn("g++", [filePath, "-o", outPath])
+                    let stderr = ""
+                    compile.stderr.on("data", (chunk: any) => { stderr += chunk.toString() })
+                    compile.on("close", (code) => {
+                        if(code === 0) return resolve()
+                        return reject(new Error(stderr || `g++ exited with code ${code}`))
+                    })
+                    compile.on("error", reject)
+                })
+
+                // run binary
+                const run = spawn(outPath)
+                let finalOutput = ""
+                let finalErr = ""
+                run.stdout.on("data", (chunk: any) => { finalOutput += chunk.toString() })
+                run.stderr.on("data", (chunk: any) => { finalErr += chunk.toString() })
+
+                await new Promise<void>((resolve, reject) => {
+                    run.on("close", async (code) => {
+                        const output = finalOutput + (finalErr ? `\n${finalErr}` : "")
+                        console.log("finaloutput:", output)
+                        await prisma.submissions.update({
+                            where: { id: submissionId },
+                            data: { output, status: code === 0 ? "Success" : "Runtime Error" }
+                        })
+                        resolve()
+                    })
+                    run.on("error", reject)
                 })
             }
             
