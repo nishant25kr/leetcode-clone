@@ -22,6 +22,10 @@ const client = createClient({
 
 client.connect()
 
+setInterval(async()=>{
+    console.log("checking redis connection")
+}, 10000)
+
 const app = express()
 app.use(cors({
     origin: "*"
