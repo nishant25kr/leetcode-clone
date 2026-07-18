@@ -2,7 +2,23 @@ import express from 'express'
 import {createClient} from "redis"
 import { prisma } from './db.js'
 import cors from "cors"
-const client = createClient()
+
+const SUBMISSION_QUEUE = process.env.SUBMISSION_QUEUE
+const username = process.env.REDIS_USERNAME
+const password = process.env.REDIS_PASSWORD
+const host = process.env.REDIS_HOST 
+const port = parseInt(process.env.REDIS_PORT || "", 10);
+
+const client = createClient({
+   username,
+    password,
+    socket: {
+        host,
+        port
+    }
+});
+
+
 client.connect()
 
 const app = express()
@@ -28,7 +44,7 @@ app.post("/submission",async(req,res)=>{
         }
     })
 
-    client.LPUSH("problems",JSON.stringify({userId, questionId,code,language, submissionId: response.id}))
+    client.LPUSH(SUBMISSION_QUEUE, JSON.stringify({userId, questionId,code,language, submissionId: response.id}))
         .then((e)=>console.log("done",e))
         .catch((e)=> console.log("error",e))
 

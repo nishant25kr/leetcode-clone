@@ -7,12 +7,25 @@ import { prisma } from "./db";
 let count = 1;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const client = createClient()
+const SUBMISSION_QUEUE = process.env.SUBMISSION_QUEUE || "submission_queue";
+const username = process.env.REDIS_USERNAME
+const password = process.env.REDIS_PASSWORD
+const host = process.env.REDIS_HOST 
+const port = parseInt(process.env.REDIS_PORT || "", 10);
+
+const client = createClient({
+   username,
+    password,
+    socket: {
+        host,
+        port
+    }
+});
 
 client.connect().then(
     async()=>{
         while(true){
-            const response = await client.RPOP("problems")
+            const response = await client.RPOP(SUBMISSION_QUEUE)
             if(!response){
                 count = count+1;
                 console.log(count)

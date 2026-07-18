@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "generate": "prisma generate --schema=prisma/schema.prisma",
+    "postinstall": "bun run generate",
+    "prestart": "bun run generate",
     "start": "bun src/index.ts"
   },
   "keywords": [],
