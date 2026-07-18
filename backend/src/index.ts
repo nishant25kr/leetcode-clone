@@ -3,7 +3,7 @@ import {createClient} from "redis"
 import { prisma } from './db.js'
 import cors from "cors"
 
-const SUBMISSION_QUEUE = process.env.SUBMISSION_QUEUE
+const SUBMISSION_QUEUE = process.env.SUBMISSION_QUEUE || "submission_queue";
 const username = process.env.REDIS_USERNAME
 const password = process.env.REDIS_PASSWORD
 const host = process.env.REDIS_HOST 
