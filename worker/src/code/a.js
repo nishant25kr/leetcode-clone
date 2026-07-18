@@ -1,1 +1,1 @@
-console.log('hellothere')
+console.log(2-2)

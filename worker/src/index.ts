@@ -72,7 +72,7 @@ client.connect().then(
                         console.log("finaloutput:", output)
                         await prisma.submissions.update({
                             where: { id: submissionId },
-                            data: { output, status: code === 0 ? "Success" : "Runtime Error" }
+                            data: { output, status: code === 0 ? "Success" : "Failed" }
                         })
                         resolve()
                     })
